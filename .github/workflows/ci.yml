@@ -79,7 +79,7 @@ jobs:
           gcloud auth configure-docker "$GCP_REGION-docker.pkg.dev" --quiet
           docker build --tag "$IMAGE" .
           docker push "$IMAGE"
-          ADMIN_URL="https://$ADMIN_SERVICE-${{ vars.GCP_PROJECT_NUMBER }}.$GCP_REGION.run.app"
+          ADMIN_URL="https://admin.lucascamargo.com"
           IAP_AUDIENCE="/projects/${{ vars.GCP_PROJECT_NUMBER }}/locations/$GCP_REGION/services/$ADMIN_SERVICE"
           RUNTIME_ENV="NODE_ENV=production,AUTH_MODE=iap,STORAGE_DRIVER=r2,INITIAL_OWNER_EMAIL=nathan66merces@gmail.com,IAP_EXPECTED_AUDIENCE=$IAP_AUDIENCE,ADMIN_ALLOWED_ORIGINS=$ADMIN_URL,R2_PRIVATE_BUCKET=$R2_PRIVATE_BUCKET,R2_PUBLISHED_BUCKET=$R2_PUBLISHED_BUCKET,R2_PUBLISHED_BASE_URL=$R2_PUBLISHED_BASE_URL"
           gcloud run deploy "$SERVICE" \
