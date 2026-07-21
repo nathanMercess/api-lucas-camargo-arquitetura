@@ -103,5 +103,5 @@ jobs:
       - name: Verificar publicação
         run: |
           API_URL="https://$SERVICE-${{ vars.GCP_PROJECT_NUMBER }}.$GCP_REGION.run.app"
-          test "$(curl --silent --output /dev/null --write-out '%{http_code}' "$API_URL/healthz")" = 204
+          test "$(gcloud run services describe "$SERVICE" --project="$GCP_PROJECT_ID" --region="$GCP_REGION" --format='value(status.conditions[0].status)')" = True
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' "$API_URL/api/session")" = 401
