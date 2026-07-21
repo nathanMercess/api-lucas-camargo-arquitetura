@@ -51,6 +51,7 @@ export async function buildApp(
   registerRequestSecurity(app, config);
 
   app.get('/healthz', async (_request, reply) => reply.code(204).send());
+  app.get('/health', async (_request, reply) => reply.code(204).send());
 
   registerAuthentication(app, config);
   registerSessionRoute(app, accessPolicy, config.publishedBaseUrl ?? '/content');

@@ -50,6 +50,13 @@ describe('admin API', () => {
     expect(response.headers['x-frame-options']).toBe('DENY');
   });
 
+  it('serves the deployment health endpoint without an IAP assertion', async () => {
+    const app = await createApp(AuthMode.Iap);
+    const response = await app.inject({ method: 'GET', url: '/health' });
+
+    expect(response.statusCode).toBe(204);
+  });
+
   it('rejects a protected route when the IAP assertion is absent', async () => {
     const app = await createApp(AuthMode.Iap);
     const response = await app.inject({ method: 'GET', url: '/api/v1/session' });

@@ -105,5 +105,5 @@ jobs:
           API_URL="$(gcloud run services describe "$SERVICE" --project="$GCP_PROJECT_ID" --region="$GCP_REGION" --format='value(status.url)')"
           test -n "$API_URL"
           test "$(gcloud run services describe "$SERVICE" --project="$GCP_PROJECT_ID" --region="$GCP_REGION" --format='value(status.conditions[0].status)')" = True
-          test "$(curl --silent --output /dev/null --write-out '%{http_code}' "$API_URL/healthz")" = 204
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' "$API_URL/health")" = 204
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' "$API_URL/api/session")" = 401
