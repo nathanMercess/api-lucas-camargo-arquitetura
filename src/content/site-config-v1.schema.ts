@@ -483,7 +483,11 @@ export const siteConfigV1Schema = {
       required: ['enabled', 'projectData', 'html', 'css'],
       properties: {
         enabled: { type: 'boolean' },
-        projectData: { type: 'object' },
+        projectData: {
+          type: 'object',
+          maxProperties: 64,
+          propertyNames: { type: 'string', maxLength: 128 },
+        },
         html: { type: 'string', maxLength: 2_000_000 },
         css: { type: 'string', maxLength: 1_000_000 },
       },

@@ -5,7 +5,7 @@ import { AuditService } from '../audit/audit.service.js';
 import { DraftService } from '../content/draft.service.js';
 import { InvalidSiteDocumentError } from '../content/invalid-site-document.error.js';
 import { SiteDocument } from '../content/site-document.model.js';
-import { validateSiteDocumentRelationships } from '../content/validate-site-document-relationships.js';
+import { validateSiteDocument } from '../content/validate-site-document.js';
 import { MediaAsset } from '../media/media-asset.model.js';
 import { calculateJsonSha256 } from '../shared/calculate-json-sha256.js';
 import { ResourceNotFoundError } from '../shared/resource-not-found.error.js';
@@ -45,7 +45,7 @@ export class ReleaseService {
     if (draft.etag !== expectedDraftEtag)
       throw new PreconditionFailedError();
 
-    this.assertValidRelationships(draft.value);
+    this.assertValidDocument(draft.value);
     await this.assertPublishedMediaAvailable(draft.value);
 
     const principal = request.principal;
@@ -193,7 +193,7 @@ export class ReleaseService {
     if (targetDocument === null)
       throw new ResourceNotFoundError('The immutable release document is missing.');
 
-    this.assertValidRelationships(targetDocument.value);
+    this.assertValidDocument(targetDocument.value);
     await this.assertPublishedMediaAvailable(targetDocument.value);
 
     if (calculateJsonSha256(targetDocument.value) !== targetRecord.value.sha256)
@@ -358,8 +358,8 @@ export class ReleaseService {
     return errors;
   }
 
-  private assertValidRelationships(document: SiteDocument): void {
-    const errors = validateSiteDocumentRelationships(document);
+  private assertValidDocument(document: SiteDocument): void {
+    const errors = validateSiteDocument(document);
 
     if (errors.length > 0)
       throw new InvalidSiteDocumentError(errors);

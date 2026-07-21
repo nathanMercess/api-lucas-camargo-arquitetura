@@ -10,7 +10,7 @@ import { PreconditionFailedError } from '../storage/precondition-failed.error.js
 import { DraftService } from './draft.service.js';
 import { SiteDocument } from './site-document.model.js';
 import { siteConfigV1Schema } from './site-config-v1.schema.js';
-import { validateSiteDocumentRelationships } from './validate-site-document-relationships.js';
+import { validateSiteDocument } from './validate-site-document.js';
 
 export function registerContentRoutes(
   app: FastifyInstance,
@@ -59,14 +59,14 @@ export function registerContentRoutes(
     if (expectedEtag !== undefined && !/^"[^"\r\n]+"$/.test(expectedEtag))
       return sendProblem(reply, 400, 'Invalid precondition', 'If-Match must contain one strong ETag.');
 
-    const relationshipErrors = validateSiteDocumentRelationships(request.body);
+    const validationErrors = validateSiteDocument(request.body);
 
-    if (relationshipErrors.length > 0)
+    if (validationErrors.length > 0)
       return sendProblem(
         reply,
         422,
-        'Invalid content relationships',
-        relationshipErrors.slice(0, 10).join(' '),
+        'Invalid site content',
+        validationErrors.slice(0, 10).join(' '),
       );
 
     try {

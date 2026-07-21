@@ -85,7 +85,7 @@ async function handleReleaseMutation(
       return sendProblem(
         reply,
         422,
-        'Invalid content relationships',
+        'Invalid site content',
         error.relationshipErrors.slice(0, 10).join(' '),
       );
 

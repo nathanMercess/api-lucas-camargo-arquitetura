@@ -185,7 +185,7 @@ describe('admin API', () => {
 
     expect(response.statusCode).toBe(422);
     expect(response.json()).toMatchObject({
-      title: 'Invalid content relationships',
+      title: 'Invalid site content',
       status: 422,
     });
   });
@@ -277,6 +277,63 @@ describe('admin API', () => {
 
     expect(response.statusCode).toBe(400);
     expect(response.json()).toMatchObject({ title: 'Invalid request' });
+  });
+
+  it('accepts a safe visual editor document and rejects executable visual content before saving', async () => {
+    const safeApp = await createApp(AuthMode.Development);
+    const safeDocument = withVisualBuilder(publicSiteConfig, {
+      html: '<main class="lc-page"><img src="/assets/editorial/architecture-reference.jpg" alt="Projeto"><a href="/portfolio">Portfólio</a></main>',
+      css: '.lc-page { background-image: url("/assets/editorial/architecture-reference.jpg"); }',
+      projectData: {
+        assets: [{ src: '/assets/editorial/architecture-reference.jpg' }],
+        pages: [{ component: { tagName: 'main' } }],
+      },
+    });
+    const safeResponse = await safeApp.inject({
+      method: 'PUT',
+      url: '/api/v1/content/draft',
+      headers: mutationHeaders({ 'if-none-match': '*' }),
+      payload: safeDocument,
+    });
+    const unsafeApp = await createApp(AuthMode.Development);
+    const unsafeResponse = await unsafeApp.inject({
+      method: 'PUT',
+      url: '/api/v1/content/draft',
+      headers: mutationHeaders({ 'if-none-match': '*' }),
+      payload: withVisualBuilder(publicSiteConfig, {
+        html: '<button onclick="alert(1)">Publicar</button>',
+      }),
+    });
+
+    expect(safeResponse.statusCode).toBe(201);
+    expect(unsafeResponse.statusCode).toBe(422);
+    expect(unsafeResponse.json()).toMatchObject({
+      title: 'Invalid site content',
+      status: 422,
+    });
+  });
+
+  it('revalidates visual editor security before publishing a stored draft', async () => {
+    const storage = createTestStorage();
+    const app = await createApp(AuthMode.Development, storage);
+    const storedDraft = await storage.privateObjects.putJson(draftObjectKey, withVisualBuilder(publicSiteConfig, {
+      css: '@import "https://attacker.invalid/theme.css";',
+      projectData: {
+        pages: [{ component: { tagName: 'script', content: 'alert(1)' } }],
+      },
+    }), { ifNoneMatch: '*' });
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/releases',
+      headers: mutationHeaders({ 'if-match': storedDraft.etag }),
+    });
+
+    expect(response.statusCode).toBe(422);
+    expect(response.json()).toMatchObject({
+      title: 'Invalid site content',
+      status: 422,
+    });
+    expect(await storage.publishedObjects.getJson('published/manifest.json')).toBeNull();
   });
 
   it('publishes immutable content, moves the manifest atomically and synchronizes the draft', async () => {
@@ -376,7 +433,7 @@ describe('admin API', () => {
 
     expect(draft.statusCode).toBe(201);
     expect(publish.statusCode).toBe(422);
-    expect(publish.json()).toMatchObject({ title: 'Invalid content relationships' });
+    expect(publish.json()).toMatchObject({ title: 'Invalid site content' });
     expect(await storage.publishedObjects.getJson('published/manifest.json')).toBeNull();
   });
 
@@ -588,6 +645,22 @@ function mutationHeaders(additionalHeaders: Readonly<Record<string, string>> = {
     'sec-fetch-site': 'same-origin',
     'x-admin-csrf': '1',
     ...additionalHeaders,
+  };
+}
+
+function withVisualBuilder(
+  document: SiteDocument,
+  overrides: Partial<NonNullable<SiteDocument['visualBuilder']>>,
+): SiteDocument {
+  return {
+    ...document,
+    visualBuilder: {
+      enabled: true,
+      projectData: {},
+      html: '<main class="lc-page"><a href="#">Página inicial</a></main>',
+      css: '.lc-page { color: #202832; }',
+      ...overrides,
+    },
   };
 }
 
