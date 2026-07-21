@@ -14,4 +14,5 @@ export interface SiteDocument {
   readonly portfolioCategories: readonly Readonly<Record<string, unknown>>[];
   readonly projects: readonly Readonly<Record<string, unknown>>[];
   readonly footer: Readonly<Record<string, unknown>>;
+  readonly visualBuilder?: Readonly<Record<string, unknown>>;
 }

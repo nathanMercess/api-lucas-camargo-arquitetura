@@ -478,6 +478,17 @@ export const siteConfigV1Schema = {
       },
       additionalProperties: false,
     },
+    visualBuilder: {
+      type: 'object',
+      required: ['enabled', 'projectData', 'html', 'css'],
+      properties: {
+        enabled: { type: 'boolean' },
+        projectData: { type: 'object' },
+        html: { type: 'string', maxLength: 2_000_000 },
+        css: { type: 'string', maxLength: 1_000_000 },
+      },
+      additionalProperties: false,
+    },
   },
   additionalProperties: false,
 } as const;
