@@ -24,7 +24,8 @@ export function registerAuthentication(app: FastifyInstance, config: AppConfig):
       return;
     }
 
-    const assertion = request.headers['x-goog-iap-jwt-assertion'];
+    const assertion = request.headers['x-admin-iap-jwt-assertion']
+      ?? request.headers['x-goog-iap-jwt-assertion'];
 
     if (typeof assertion !== 'string' || assertion.trim() === '') {
       sendProblem(reply, 401, 'Authentication required', 'The IAP assertion is missing.');

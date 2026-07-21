@@ -29,6 +29,7 @@ export async function buildApp(
       redact: [
         'req.headers.authorization',
         'req.headers.cookie',
+        'req.headers.x-admin-iap-jwt-assertion',
         'req.headers.x-goog-iap-jwt-assertion',
         'res.headers.set-cookie',
       ],
