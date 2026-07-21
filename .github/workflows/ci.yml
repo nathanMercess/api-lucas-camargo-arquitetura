@@ -1,21 +1,29 @@
-name: CI
+name: CI e deploy
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: api-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GCP_PROJECT_ID: lucas-camargo-arq-prod
+  GCP_REGION: us-central1
+  GCP_ARTIFACT_REPOSITORY: lucas-camargo
+  SERVICE: lucas-camargo-api
+  ADMIN_SERVICE: lucas-camargo-admin
+  R2_PRIVATE_BUCKET: lucas-camargo-private
+  R2_PUBLISHED_BUCKET: lucas-camargo-published
 
 jobs:
-  validate-api:
-    name: Validar API administrativa
+  validate:
+    name: Validar API
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -32,7 +40,68 @@ jobs:
         run: |
           corepack enable
           corepack prepare yarn@1.22.22 --activate
-      - name: Instalar dependências
-        run: yarn install --frozen-lockfile --non-interactive
-      - name: Executar validação
-        run: yarn run check
+      - name: Instalar e validar
+        run: |
+          yarn install --frozen-lockfile --non-interactive
+          yarn run check
+
+  deploy:
+    name: Publicar API
+    if: github.event_name == 'push' && github.repository == 'nathanMercess/api-lucas-camargo-arquitetura'
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Obter o código
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Autenticar no Google Cloud
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+      - name: Preparar Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          version: '575.0.0'
+      - name: Compilar, enviar e publicar
+        env:
+          IMAGE: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_ARTIFACT_REPOSITORY }}/${{ env.SERVICE }}:${{ github.sha }}
+          R2_PUBLISHED_BASE_URL: ${{ vars.R2_PUBLISHED_BASE_URL }}
+        run: |
+          gcloud auth configure-docker "$GCP_REGION-docker.pkg.dev" --quiet
+          docker build --tag "$IMAGE" .
+          docker push "$IMAGE"
+          ADMIN_URL="https://$ADMIN_SERVICE-${{ vars.GCP_PROJECT_NUMBER }}.$GCP_REGION.run.app"
+          IAP_AUDIENCE="/projects/${{ vars.GCP_PROJECT_NUMBER }}/locations/$GCP_REGION/services/$ADMIN_SERVICE"
+          RUNTIME_ENV="NODE_ENV=production,AUTH_MODE=iap,STORAGE_DRIVER=r2,INITIAL_OWNER_EMAIL=nathan66merces@gmail.com,IAP_EXPECTED_AUDIENCE=$IAP_AUDIENCE,ADMIN_ALLOWED_ORIGINS=$ADMIN_URL,R2_PRIVATE_BUCKET=$R2_PRIVATE_BUCKET,R2_PUBLISHED_BUCKET=$R2_PUBLISHED_BUCKET,R2_PUBLISHED_BASE_URL=$R2_PUBLISHED_BASE_URL"
+          gcloud run deploy "$SERVICE" \
+            --project="$GCP_PROJECT_ID" \
+            --region="$GCP_REGION" \
+            --image="$IMAGE" \
+            --allow-unauthenticated \
+            --ingress=all \
+            --cpu=1 \
+            --memory=256Mi \
+            --concurrency=4 \
+            --timeout=60s \
+            --min=0 \
+            --max=1 \
+            --port=8080 \
+            --service-account="lucas-admin-runtime@$GCP_PROJECT_ID.iam.gserviceaccount.com" \
+            --set-env-vars="$RUNTIME_ENV" \
+            --set-secrets="R2_ENDPOINT=lucas-r2-endpoint:latest,R2_ACCESS_KEY_ID=lucas-r2-access-key-id:latest,R2_SECRET_ACCESS_KEY=lucas-r2-secret-access-key:latest" \
+            --labels="environment=production,managed-by=github-actions,visibility=private-api" \
+            --quiet
+      - name: Verificar publicação
+        run: |
+          API_URL="https://$SERVICE-${{ vars.GCP_PROJECT_NUMBER }}.$GCP_REGION.run.app"
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' "$API_URL/healthz")" = 204
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' "$API_URL/api/session")" = 401
