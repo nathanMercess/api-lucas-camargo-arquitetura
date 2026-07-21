@@ -13,7 +13,7 @@ export function registerAuthentication(app: FastifyInstance, config: AppConfig):
 
   app.decorateRequest('principal', null);
   app.addHook('onRequest', async (request, reply) => {
-    if (request.url === '/healthz')
+    if (request.url === '/healthz' || request.url === '/health')
       return;
 
     if (config.authMode === AuthMode.Development) {
