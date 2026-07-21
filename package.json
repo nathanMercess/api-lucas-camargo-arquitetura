@@ -1,63 +1,32 @@
 {
-  "name": "lucas-camargo-arquitetura",
-  "version": "0.0.0",
-  "scripts": {
-    "ng": "ng",
-    "start": "ng serve lucas-camargo-arquitetura",
-    "start:admin": "ng serve admin --port 4201",
-    "start:admin-api": "yarn workspace @lucas-camargo/admin-api start",
-    "build": "ng build lucas-camargo-arquitetura",
-    "build:admin": "ng build admin",
-    "build:admin-api": "yarn workspace @lucas-camargo/admin-api build",
-    "build:all": "yarn build && yarn build:admin && yarn build:admin-api",
-    "watch": "ng build lucas-camargo-arquitetura --watch --configuration development",
-    "watch:admin": "ng build admin --watch --configuration development",
-    "test": "yarn test:site && yarn test:admin && yarn test:admin-api",
-    "test:site": "ng test lucas-camargo-arquitetura --watch=false",
-    "test:admin": "ng test admin --watch=false",
-    "test:admin-api": "yarn workspace @lucas-camargo/admin-api test",
-    "test:watch": "ng test lucas-camargo-arquitetura",
-    "lint": "yarn lint:site && yarn lint:admin && yarn lint:admin-api",
-    "lint:site": "ng lint lucas-camargo-arquitetura",
-    "lint:admin": "ng lint admin",
-    "lint:admin-api": "yarn workspace @lucas-camargo/admin-api lint",
-    "verify:content": "node scripts/verify-content-manifest.mjs",
-    "check": "yarn run verify:content && yarn lint && yarn test && yarn build:all",
-    "check:worker": "yarn --cwd cloudflare/content-worker install --frozen-lockfile --non-interactive && yarn --cwd cloudflare/content-worker run check",
-    "check:all": "yarn run check && yarn run check:worker"
-  },
+  "name": "api-lucas-camargo-arquitetura",
+  "version": "0.1.0",
   "private": true,
-  "workspaces": [
-    "server/admin-api"
-  ],
-  "packageManager": "yarn@1.22.22",
-  "engines": {
-    "node": "^20.19.0 || ^22.12.0 || ^24.0.0"
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "test": "vitest run",
+    "lint": "eslint \"src/**/*.ts\" --max-warnings=0",
+    "check": "yarn lint && yarn test && yarn build"
   },
+  "packageManager": "yarn@1.22.22",
   "dependencies": {
-    "@angular/cdk": "^21.0.0",
-    "@angular/common": "^21.2.0",
-    "@angular/compiler": "^21.2.0",
-    "@angular/core": "^21.2.0",
-    "@angular/forms": "^21.2.0",
-    "@angular/localize": "^21.2.0",
-    "@angular/platform-browser": "^21.2.0",
-    "@angular/router": "^21.2.0",
-    "primeng": "^21.1.9",
-    "rxjs": "~7.8.0",
-    "tslib": "^2.3.0"
+    "@aws-sdk/client-s3": "^3.1091.0",
+    "@aws-sdk/s3-request-presigner": "^3.1091.0",
+    "fastify": "^5.10.0",
+    "google-auth-library": "^10.9.0"
   },
   "devDependencies": {
-    "@angular-eslint/builder": "^21.3.1",
-    "@angular/build": "^21.2.19",
-    "@angular/cli": "^21.2.19",
-    "@angular/compiler-cli": "^21.2.0",
+    "@types/node": "^20.19.0",
     "@eslint/js": "^9.39.0",
-    "angular-eslint": "^21.3.1",
     "eslint": "^9.39.0",
-    "jsdom": "^28.0.0",
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.64.0",
     "vitest": "^4.0.8"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }

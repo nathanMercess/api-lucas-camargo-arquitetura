@@ -7,22 +7,30 @@ WORKDIR /app
 RUN corepack enable && corepack prepare yarn@1.22.22 --activate
 
 COPY package.json yarn.lock ./
-COPY server/admin-api/package.json server/admin-api/package.json
 RUN yarn install --frozen-lockfile --non-interactive
 
 COPY . .
-RUN yarn build --configuration production
+RUN yarn build
 
-FROM nginxinc/nginx-unprivileged:stable-alpine
+FROM node:24-alpine
 
-ENV CONTENT_BASE_URL=/content \
-  NGINX_ENVSUBST_FILTER=CONTENT_BASE_URL \
-  NGINX_ENVSUBST_OUTPUT_DIR=/usr/share/nginx/html/runtime
+ENV NODE_ENV=production \
+  HOST=0.0.0.0 \
+  PORT=8080 \
+  AUTH_MODE=iap \
+  STORAGE_DRIVER=r2
 
-COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
-COPY deploy/runtime-config.js.template /etc/nginx/templates/runtime-config.js.template
-COPY --from=build --chown=101:101 /app/dist/lucas-camargo-arquitetura/browser/ /usr/share/nginx/html/
+WORKDIR /app
+
+RUN corepack enable && corepack prepare yarn@1.22.22 --activate
+
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile --non-interactive --production && yarn cache clean
+
+COPY --from=build --chown=node:node /app/dist/ ./dist/
 
 EXPOSE 8080
 
-USER 101:101
+USER node
+
+CMD ["node", "dist/server.js"]

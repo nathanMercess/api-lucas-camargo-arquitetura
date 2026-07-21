@@ -2,14 +2,12 @@
 
 # Compiled output
 /dist
-/server/admin-api/dist
 /tmp
 /out-tsc
 /bazel-out
 
 # Node
 /node_modules
-/server/admin-api/node_modules
 npm-debug.log
 yarn-error.log
 
