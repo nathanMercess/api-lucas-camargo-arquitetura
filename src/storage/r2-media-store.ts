@@ -14,6 +14,7 @@ export class R2MediaStore implements MediaStore {
     this.client = new S3Client({
       endpoint: config.endpoint,
       region: 'auto',
+      forcePathStyle: true,
       requestChecksumCalculation: 'WHEN_REQUIRED',
       credentials: {
         accessKeyId: config.accessKeyId,

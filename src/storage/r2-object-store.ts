@@ -13,6 +13,7 @@ export class R2ObjectStore implements ObjectStore {
     this.client = new S3Client({
       endpoint: config.endpoint,
       region: 'auto',
+      forcePathStyle: true,
       credentials: {
         accessKeyId: config.accessKeyId,
         secretAccessKey: config.secretAccessKey,
