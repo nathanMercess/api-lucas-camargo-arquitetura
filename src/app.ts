@@ -62,20 +62,54 @@ export async function buildApp(
 
   app.setErrorHandler((error, request, reply) => {
     if (isValidationError(error)) {
-      sendProblem(reply, 400, 'Invalid request', 'The request does not match the required contract.');
+      sendProblem(
+        reply,
+        400,
+        'Invalid request',
+        'The request does not match the required contract.',
+      );
       return;
     }
 
     const clientErrorStatus = getClientErrorStatus(error);
 
     if (clientErrorStatus !== null) {
-      const title = clientErrorStatus === 413 ? 'Payload too large' : 'Invalid request';
-      sendProblem(reply, clientErrorStatus, title, 'The request could not be accepted by the admin API.');
+      const title = clientErrorStatus === 413
+        ? 'Payload too large'
+        : 'Invalid request';
+
+      sendProblem(
+        reply,
+        clientErrorStatus,
+        title,
+        'The request could not be accepted by the admin API.',
+      );
       return;
     }
 
     request.log.error({ err: error }, 'Unhandled admin API error.');
-    sendProblem(reply, 500, 'Internal server error', 'The request could not be completed.');
+
+    const diagnosticError = error instanceof Error
+      ? {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+        cause: error.cause,
+      }
+      : {
+        value: error,
+      };
+
+    return reply
+      .code(500)
+      .type('application/problem+json')
+      .send({
+        type: 'about:blank',
+        title: 'Internal server error',
+        status: 500,
+        detail: 'The request could not be completed.',
+        diagnostic: diagnosticError,
+      });
   });
 
   return app;
