@@ -4,4 +4,5 @@ export enum AuditAction {
   ReleasePublish = 'release.publish',
   ReleaseRollback = 'release.rollback',
   MediaComplete = 'media.complete',
+  ContactMessageStatusUpdate = 'contact-message.status-update',
 }

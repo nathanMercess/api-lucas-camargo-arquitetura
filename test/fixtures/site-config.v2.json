@@ -1,0 +1,364 @@
+{
+  "schemaVersion": 2,
+  "releaseId": "draft-v2",
+  "publishedAt": "2026-08-24T00:00:00.000Z",
+  "locale": "pt-BR",
+  "identity": {
+    "brandName": "Lucas Camargo",
+    "descriptor": "Arquitetura e Construção",
+    "canonicalUrl": "https://lucascamargo.com",
+    "logoLightMediaId": "logo-light",
+    "logoDarkMediaId": "logo-dark",
+    "faviconMediaId": "favicon"
+  },
+  "seo": {
+    "title": "Lucas Camargo | Arquitetura e Construção",
+    "description": "Arquitetura e construção com rigor técnico e sensibilidade.",
+    "canonicalUrl": "https://lucascamargo.com",
+    "robots": "index, follow",
+    "themeColor": "#333332",
+    "openGraph": {
+      "title": "Lucas Camargo | Arquitetura e Construção",
+      "description": "Espaços que permanecem.",
+      "type": "website",
+      "imageMediaId": "open-graph",
+      "imageAlt": "Lucas Camargo Arquitetura"
+    },
+    "twitter": {
+      "card": "summary_large_image",
+      "title": "Lucas Camargo | Arquitetura e Construção",
+      "description": "Espaços que permanecem.",
+      "imageMediaId": "open-graph",
+      "imageAlt": "Lucas Camargo Arquitetura"
+    },
+    "organization": {
+      "name": "Lucas Camargo Arquitetura e Construção",
+      "url": "https://lucascamargo.com",
+      "email": "arquiteto@lucascamargo.com",
+      "telephone": "+5511986681572",
+      "addressLocality": "São Caetano do Sul",
+      "addressRegion": "SP",
+      "addressCountry": "BR"
+    }
+  },
+  "theme": {
+    "presetId": "lucas-camargo-v1",
+    "colors": {
+      "accent": "#e36571",
+      "accentSoft": "#f8e4e6",
+      "ink": "#333332",
+      "inkDeep": "#262625",
+      "surfaceMuted": "#f5f4f4",
+      "surface": "#ffffff",
+      "textMuted": "#6a6a68",
+      "border": "rgb(51 51 50 / 20%)",
+      "focus": "#e36571"
+    },
+    "typography": {
+      "brandFontFamily": "'Century Gothic', CenturyGothic, 'Avenir Next', Futura, sans-serif",
+      "dataFontFamily": "'Cascadia Mono', 'Aptos Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace"
+    },
+    "layout": {
+      "contentMaxWidthPx": 1440,
+      "pageGutterMinPx": 22,
+      "pageGutterPreferredVw": 4.5,
+      "pageGutterMaxPx": 76
+    },
+    "motion": {
+      "revealEnabled": true,
+      "revealDurationMs": 750,
+      "revealTransformDurationMs": 950
+    }
+  },
+  "uiLabels": {
+    "skipToContent": "Pular para o conteúdo",
+    "mainNavigation": "Navegação principal",
+    "footerNavigation": "Links do rodapé",
+    "openMenu": "Abrir menu",
+    "closeMenu": "Fechar menu",
+    "pausePortfolio": "Pausar portfólio",
+    "resumePortfolio": "Retomar portfólio",
+    "referenceImage": "Imagem de referência",
+    "exploreCategory": "Explorar categoria"
+  },
+  "media": [
+    {
+      "id": "favicon",
+      "path": "/favicon.ico",
+      "mimeType": "image/x-icon",
+      "width": 64,
+      "height": 64,
+      "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "provenance": "brand"
+    },
+    {
+      "id": "open-graph",
+      "path": "/og.png",
+      "mimeType": "image/png",
+      "width": 1200,
+      "height": 630,
+      "sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+      "provenance": "brand"
+    },
+    {
+      "id": "logo-light",
+      "path": "/assets/brand/logo-light.png",
+      "mimeType": "image/png",
+      "width": 1090,
+      "height": 256,
+      "sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+      "provenance": "brand"
+    },
+    {
+      "id": "logo-dark",
+      "path": "/assets/brand/logo-dark.png",
+      "mimeType": "image/png",
+      "width": 1090,
+      "height": 256,
+      "sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+      "provenance": "brand"
+    },
+    {
+      "id": "architecture-reference",
+      "path": "/assets/editorial/architecture-reference.jpg",
+      "mimeType": "image/jpeg",
+      "width": 2200,
+      "height": 1467,
+      "sha256": "d661233899c403d478bc718aa2a800f0c2c87ab113628914f5a1ce4aa84066af",
+      "provenance": "reference"
+    }
+  ],
+  "header": {
+    "logo": {
+      "assetId": "logo-light",
+      "alt": "Lucas Camargo Arquitetura e Construção",
+      "decorative": false,
+      "focalPointX": 50,
+      "focalPointY": 50
+    },
+    "homeLink": {
+      "id": "header-home",
+      "label": "Início",
+      "href": "/",
+      "target": "_self"
+    },
+    "primaryCta": {
+      "id": "header-contact",
+      "label": "Iniciar um projeto",
+      "href": "#contato",
+      "target": "_self"
+    }
+  },
+  "navigationItems": [
+    {
+      "id": "home",
+      "label": "Início",
+      "href": "/"
+    },
+    {
+      "id": "projects",
+      "label": "Projetos",
+      "href": "#projetos"
+    },
+    {
+      "id": "contact",
+      "label": "Contato",
+      "href": "#contato"
+    }
+  ],
+  "portfolioCategories": [],
+  "projects": [],
+  "footer": {
+    "logo": {
+      "assetId": "logo-light",
+      "alt": "Lucas Camargo Arquitetura e Construção",
+      "decorative": false,
+      "focalPointX": 50,
+      "focalPointY": 50
+    },
+    "links": [
+      {
+        "id": "projects",
+        "label": "Projetos",
+        "href": "#projetos"
+      }
+    ],
+    "socialLinks": [
+      {
+        "id": "instagram",
+        "network": "Instagram",
+        "label": "Instagram",
+        "href": "https://www.instagram.com/lucascamargo.arquiteto/",
+        "icon": "instagram"
+      }
+    ],
+    "statement": "Arquitetura feita para permanecer.",
+    "location": "São Caetano do Sul, SP",
+    "copyrightOwner": "Lucas Camargo",
+    "backToTopLink": {
+      "id": "footer-back-to-top",
+      "label": "Voltar ao topo",
+      "href": "#inicio",
+      "target": "_self"
+    }
+  },
+  "contact": {
+    "email": "arquiteto@lucascamargo.com",
+    "phoneLabel": "+55 11 98668-1572",
+    "phoneE164": "+5511986681572",
+    "instagramUrl": "https://www.instagram.com/lucascamargo.arquiteto/",
+    "whatsappNumber": "5511986681572",
+    "whatsappDefaultMessage": "Olá, gostaria de conversar sobre um projeto."
+  },
+  "pages": [
+    {
+      "id": "home",
+      "slug": "home",
+      "path": "/",
+      "order": 10,
+      "visible": true,
+      "seo": {
+        "title": "Lucas Camargo | Arquitetura e Construção",
+        "description": "Arquitetura e construção do projeto à obra.",
+        "canonicalPath": "/",
+        "imageMediaId": "architecture-reference",
+        "noIndex": false
+      },
+      "sections": [
+        {
+          "id": "hero",
+          "type": "hero",
+          "variant": "editorial-v1",
+          "order": 10,
+          "visible": true,
+          "anchor": "inicio",
+          "overline": "São Paulo, arquitetura e construção",
+          "title": {
+            "lines": [
+              {
+                "segments": [
+                  {
+                    "text": "Espaços que permanecem.",
+                    "emphasis": true
+                  }
+                ]
+              }
+            ]
+          },
+          "supportingText": {
+            "lines": [
+              {
+                "segments": [
+                  {
+                    "text": "Do primeiro traço à construção.",
+                    "emphasis": false
+                  }
+                ]
+              }
+            ]
+          },
+          "portfolioLink": {
+            "id": "hero-projects",
+            "label": "Explorar projetos",
+            "href": "#projetos",
+            "target": "_self"
+          },
+          "background": {
+            "assetId": "architecture-reference",
+            "alt": "Referência visual de uma residência contemporânea integrada à paisagem",
+            "decorative": false,
+            "focalPointX": 50,
+            "focalPointY": 50
+          },
+          "indexLabel": "LC / 01",
+          "caption": "Arquitetura e construção"
+        },
+        {
+          "id": "projects-grid",
+          "type": "project-grid",
+          "variant": "grid-v1",
+          "order": 20,
+          "visible": true,
+          "anchor": "projetos",
+          "overline": "Projetos selecionados",
+          "title": {
+            "lines": [
+              {
+                "segments": [
+                  {
+                    "text": "Arquitetura com identidade.",
+                    "emphasis": true
+                  }
+                ]
+              }
+            ]
+          },
+          "description": [
+            "Uma seleção de projetos conduzidos do conceito à execução."
+          ],
+          "projectIds": [],
+          "maxColumns": 3
+        },
+        {
+          "id": "contact-form",
+          "type": "contact-form",
+          "variant": "default-v1",
+          "order": 30,
+          "visible": true,
+          "anchor": "mensagem",
+          "overline": "Fale com o escritório",
+          "title": {
+            "lines": [
+              {
+                "segments": [
+                  {
+                    "text": "Conte sobre o seu projeto.",
+                    "emphasis": true
+                  }
+                ]
+              }
+            ]
+          },
+          "description": [
+            "Envie uma mensagem para iniciar a conversa."
+          ],
+          "nameLabel": "Nome",
+          "emailLabel": "E-mail",
+          "phoneLabel": "Telefone",
+          "subjectLabel": "Assunto",
+          "messageLabel": "Mensagem",
+          "submitLabel": "Enviar mensagem",
+          "successMessage": "Mensagem enviada com sucesso.",
+          "errorMessage": "Não foi possível enviar a mensagem.",
+          "privacyNotice": "Seus dados serão usados somente para responder ao contato."
+        },
+        {
+          "id": "whatsapp-contact",
+          "type": "whatsapp-cta",
+          "variant": "editorial-v1",
+          "order": 40,
+          "visible": true,
+          "anchor": "contato",
+          "overline": "Comece uma conversa",
+          "title": {
+            "lines": [
+              {
+                "segments": [
+                  {
+                    "text": "Seu próximo espaço pode começar agora.",
+                    "emphasis": true
+                  }
+                ]
+              }
+            ]
+          },
+          "body": [
+            "Conte sobre suas ideias e objetivos para o projeto."
+          ],
+          "label": "Conversar pelo WhatsApp",
+          "message": "Olá, gostaria de conversar sobre um projeto."
+        }
+      ]
+    }
+  ]
+}

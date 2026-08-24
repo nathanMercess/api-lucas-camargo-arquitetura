@@ -5,6 +5,8 @@ import { AccessPolicyService } from './auth/access-policy.service.js';
 import { registerAuthentication } from './auth/register-authentication.js';
 import { registerSessionRoute } from './auth/register-session-route.js';
 import { AppConfig } from './config/app-config.model.js';
+import { ContactMessageService } from './contact-messages/contact-message.service.js';
+import { registerContactMessageRoutes } from './contact-messages/register-contact-message-routes.js';
 import { DraftService } from './content/draft.service.js';
 import { registerContentRoutes } from './content/register-content-routes.js';
 import { MediaService } from './media/media.service.js';
@@ -47,6 +49,7 @@ export async function buildApp(
     auditService,
   );
   const mediaService = new MediaService(storage.privateObjects, storage.media, auditService);
+  const contactMessageService = new ContactMessageService(storage.privateObjects, auditService);
 
   registerRequestSecurity(app, config);
 
@@ -58,6 +61,7 @@ export async function buildApp(
   registerContentRoutes(app, accessPolicy, draftService, auditService);
   registerReleaseRoutes(app, accessPolicy, releaseService);
   registerMediaRoutes(app, accessPolicy, mediaService);
+  registerContactMessageRoutes(app, accessPolicy, contactMessageService);
   registerAuditRoutes(app, accessPolicy, auditService);
 
   app.setErrorHandler((error, request, reply) => {
@@ -89,27 +93,12 @@ export async function buildApp(
 
     request.log.error({ err: error }, 'Unhandled admin API error.');
 
-    const diagnosticError = error instanceof Error
-      ? {
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-        cause: error.cause,
-      }
-      : {
-        value: error,
-      };
-
-    return reply
-      .code(500)
-      .type('application/problem+json')
-      .send({
-        type: 'about:blank',
-        title: 'Internal server error',
-        status: 500,
-        detail: 'The request could not be completed.',
-        diagnostic: diagnosticError,
-      });
+    return sendProblem(
+      reply,
+      500,
+      'Internal server error',
+      'The request could not be completed.',
+    );
   });
 
   return app;

@@ -11,6 +11,8 @@ const ownerPermissions: readonly Permission[] = [
   Permission.Rollback,
   Permission.MediaRead,
   Permission.MediaWrite,
+  Permission.ContactMessageRead,
+  Permission.ContactMessageWrite,
   Permission.AuditRead,
 ];
 

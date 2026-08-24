@@ -388,9 +388,9 @@ function collectReferencedMediaIds(document: SiteDocument): ReadonlySet<string> 
     document.seo,
     document.header,
     document.footer,
-    document.sections,
     document.portfolioCategories,
     document.projects,
+    ...(document.schemaVersion === 1 ? [document.sections] : [document.contact, document.pages]),
   ];
 
   for (const root of roots)

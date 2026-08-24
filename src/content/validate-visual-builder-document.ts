@@ -23,6 +23,9 @@ interface ProjectValidationState {
 }
 
 export function validateVisualBuilderDocument(document: SiteDocument): readonly string[] {
+  if (document.schemaVersion !== 1)
+    return [];
+
   const visualBuilder = document.visualBuilder;
 
   if (visualBuilder === undefined)

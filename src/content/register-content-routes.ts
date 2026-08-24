@@ -9,7 +9,7 @@ import { calculateJsonSha256 } from '../shared/calculate-json-sha256.js';
 import { PreconditionFailedError } from '../storage/precondition-failed.error.js';
 import { DraftService } from './draft.service.js';
 import { SiteDocument } from './site-document.model.js';
-import { siteConfigV1Schema } from './site-config-v1.schema.js';
+import { siteDocumentSchema } from './site-document.schema.js';
 import { validateSiteDocument } from './validate-site-document.js';
 
 export function registerContentRoutes(
@@ -41,7 +41,7 @@ export function registerContentRoutes(
   }>('/api/v1/content/draft', {
     preHandler: requirePermission(accessPolicy, Permission.ContentWrite),
     schema: {
-      body: siteConfigV1Schema,
+      body: siteDocumentSchema,
     },
   }, async (request, reply) => {
     const expectedEtag = request.headers['if-match']?.trim();

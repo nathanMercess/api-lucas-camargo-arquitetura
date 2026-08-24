@@ -1,3 +1,5 @@
+import { SiteConfigV1 } from './site-config-v1.model.js';
+import { SiteConfigV2 } from './site-config-v2.model.js';
 import { SiteDocument } from './site-document.model.js';
 
 export function validateSiteDocumentRelationships(document: SiteDocument): readonly string[] {
@@ -12,17 +14,6 @@ export function validateSiteDocumentRelationships(document: SiteDocument): reado
   for (const asset of document.media)
     validatePublishedMediaPath(asset, errors);
 
-  validateUnique(document.sections.map((section) => readString(section, 'id')), 'sections.id', errors);
-  validateUnique(
-    document.sections.map((section) => readString(section, 'anchor')),
-    'sections.anchor',
-    errors,
-  );
-  validateUnique(
-    document.sections.map((section) => readNumber(section, 'order')),
-    'sections.order',
-    errors,
-  );
   validateUnique(
     document.portfolioCategories.map((category) => readString(category, 'id')),
     'portfolioCategories.id',
@@ -58,6 +49,34 @@ export function validateSiteDocumentRelationships(document: SiteDocument): reado
       validateMediaId(mediaIds, coverMediaId, `portfolioCategories.${readString(category, 'id')}.coverMediaId`, errors);
   }
 
+  validateProjects(document, mediaIds, categoryIds, errors);
+
+  if (document.schemaVersion === 1)
+    validateV1Relationships(document, mediaIds, categoryIds, errors);
+  else
+    validateV2Relationships(document, mediaIds, errors);
+
+  return errors;
+}
+
+function validateV1Relationships(
+  document: SiteConfigV1,
+  mediaIds: ReadonlySet<string>,
+  categoryIds: ReadonlySet<string>,
+  errors: string[],
+): void {
+  validateUnique(document.sections.map((section) => readString(section, 'id')), 'sections.id', errors);
+  validateUnique(
+    document.sections.map((section) => readString(section, 'anchor')),
+    'sections.anchor',
+    errors,
+  );
+  validateUnique(
+    document.sections.map((section) => readNumber(section, 'order')),
+    'sections.order',
+    errors,
+  );
+
   for (const section of document.sections) {
     const sectionId = readString(section, 'id');
     const sectionType = readString(section, 'type');
@@ -73,7 +92,101 @@ export function validateSiteDocumentRelationships(document: SiteDocument): reado
         validateCategoryId(categoryIds, categoryId, `sections.${sectionId}.categoryIds`, errors);
     }
   }
+}
 
+function validateV2Relationships(
+  document: SiteConfigV2,
+  mediaIds: ReadonlySet<string>,
+  errors: string[],
+): void {
+  const projectIds = new Set(document.projects.map((project) => readString(project, 'id')));
+
+  validateUnique(document.pages.map((page) => page.id), 'pages.id', errors);
+  validateUnique(document.pages.map((page) => page.slug), 'pages.slug', errors);
+  validateUnique(document.pages.map((page) => page.path), 'pages.path', errors);
+  validateUnique(document.pages.map((page) => page.order), 'pages.order', errors);
+
+  const homePages = document.pages.filter((page) => page.slug === 'home');
+
+  if (homePages.length !== 1)
+    errors.push('pages must contain exactly one home page.');
+  else if (homePages[0]?.visible !== true)
+    errors.push('pages.home must be visible.');
+
+  validateV2Contact(document, errors);
+
+  for (const page of document.pages) {
+    const pagePath = `pages.${page.id}`;
+    const expectedPath = page.slug === 'home' ? '/' : `/${page.slug}`;
+
+    if (page.path !== expectedPath)
+      errors.push(`${pagePath}.path must match ${expectedPath}.`);
+
+    validateMediaId(mediaIds, readString(page.seo, 'imageMediaId'), `${pagePath}.seo.imageMediaId`, errors);
+
+    if (readString(page.seo, 'canonicalPath') !== page.path)
+      errors.push(`${pagePath}.seo.canonicalPath must match ${page.path}.`);
+
+    validateUnique(page.sections.map((section) => section.id), `${pagePath}.sections.id`, errors);
+    validateUnique(page.sections.map((section) => section.anchor), `${pagePath}.sections.anchor`, errors);
+    validateUnique(page.sections.map((section) => section.order), `${pagePath}.sections.order`, errors);
+
+    for (const section of page.sections) {
+      const sectionPath = `${pagePath}.sections.${section.id}`;
+
+      if (section.type === 'hero') {
+        validateMediaReference(mediaIds, section.background, `${sectionPath}.background`, errors);
+        continue;
+      }
+
+      if (section.type === 'project-grid') {
+        validateUnique(section.projectIds, `${sectionPath}.projectIds`, errors);
+
+        for (const projectId of section.projectIds)
+          validateProjectId(projectIds, projectId, `${sectionPath}.projectIds`, errors);
+
+        continue;
+      }
+
+      if (section.type === 'whatsapp-cta' && section.message.trim() === '')
+        errors.push(`${sectionPath}.message must not be empty.`);
+    }
+  }
+}
+
+function validateV2Contact(document: SiteConfigV2, errors: string[]): void {
+  const organization = readRecord(document.seo, 'organization');
+
+  if (document.contact.email !== readString(organization, 'email'))
+    errors.push('contact.email must match seo.organization.email.');
+
+  if (document.contact.phoneE164 !== normalizePhone(readString(organization, 'telephone')))
+    errors.push('contact.phoneE164 must match seo.organization.telephone.');
+
+  if (!/^[1-9][0-9]{7,14}$/.test(document.contact.whatsappNumber))
+    errors.push('contact.whatsappNumber must contain international digits without a plus sign.');
+
+  try {
+    const instagramUrl = new URL(document.contact.instagramUrl);
+
+    if (
+      instagramUrl.protocol !== 'https:' ||
+      !['instagram.com', 'www.instagram.com'].includes(instagramUrl.hostname.toLowerCase()) ||
+      instagramUrl.username !== '' ||
+      instagramUrl.password !== ''
+    )
+      errors.push('contact.instagramUrl must use the official Instagram HTTPS origin.');
+  } catch {
+    errors.push('contact.instagramUrl must be a valid URL.');
+  }
+}
+
+function validateProjects(
+  document: SiteDocument,
+  mediaIds: ReadonlySet<string>,
+  categoryIds: ReadonlySet<string>,
+  errors: string[],
+): void {
   for (const project of document.projects) {
     const projectId = readString(project, 'id');
     const slug = readString(project, 'slug');
@@ -92,8 +205,6 @@ export function validateSiteDocumentRelationships(document: SiteDocument): reado
     if (readString(seo, 'canonicalPath') !== `/portfolio/projeto/${slug}`)
       errors.push(`projects.${projectId}.seo.canonicalPath must match /portfolio/projeto/${slug}.`);
   }
-
-  return errors;
 }
 
 function validateUnique(
@@ -133,6 +244,16 @@ function validateCategoryId(
 ): void {
   if (!categoryIds.has(categoryId))
     errors.push(`${field} references missing category ${categoryId}.`);
+}
+
+function validateProjectId(
+  projectIds: ReadonlySet<string>,
+  projectId: string,
+  field: string,
+  errors: string[],
+): void {
+  if (!projectIds.has(projectId))
+    errors.push(`${field} references missing project ${projectId}.`);
 }
 
 function validatePublishedMediaPath(
@@ -183,4 +304,8 @@ function readStringArray(record: Readonly<Record<string, unknown>>, key: string)
 
 function readNumber(record: Readonly<Record<string, unknown>>, key: string): number {
   return record[key] as number;
+}
+
+function normalizePhone(value: string): string {
+  return `+${value.replace(/[^0-9]/g, '')}`;
 }

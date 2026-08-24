@@ -32,6 +32,10 @@ const publicSiteConfig = JSON.parse(readFileSync(
   new URL('../test/fixtures/site-config.v1.json', import.meta.url),
   'utf-8',
 )) as SiteDocument;
+const publicSiteConfigV2 = JSON.parse(readFileSync(
+  new URL('../test/fixtures/site-config.v2.json', import.meta.url),
+  'utf-8',
+)) as SiteDocument;
 
 describe('admin API', () => {
   const apps: FastifyInstance[] = [];
@@ -172,6 +176,43 @@ describe('admin API', () => {
     expect(response.statusCode).toBe(201);
     expect(response.json()).toEqual(publicSiteConfig);
     expect(response.headers.etag).toMatch(/^"[a-f0-9]{64}"$/);
+  });
+
+  it('accepts SiteConfigV2 and preserves ETag publication and cross-version rollback', async () => {
+    const app = await createApp(AuthMode.Development);
+    const createdV2 = await app.inject({
+      method: 'PUT',
+      url: '/api/v1/content/draft',
+      headers: mutationHeaders({ 'if-none-match': '*' }),
+      payload: publicSiteConfigV2,
+    });
+    const publishedV2 = await publishDraft(app, createdV2.headers.etag ?? '');
+    const synchronizedV2 = await app.inject({ method: 'GET', url: '/api/v1/content/draft' });
+    const savedV1 = await app.inject({
+      method: 'PUT',
+      url: '/api/v1/content/draft',
+      headers: mutationHeaders({ 'if-match': synchronizedV2.headers.etag ?? '' }),
+      payload: publicSiteConfig,
+    });
+
+    await publishDraft(app, savedV1.headers.etag ?? '');
+
+    const synchronizedV1 = await app.inject({ method: 'GET', url: '/api/v1/content/draft' });
+    const rollback = await app.inject({
+      method: 'POST',
+      url: `/api/v1/releases/${publishedV2.releaseId}/rollback`,
+      headers: mutationHeaders({ 'if-match': synchronizedV1.headers.etag ?? '' }),
+    });
+    const restoredDraft = await app.inject({ method: 'GET', url: '/api/v1/content/draft' });
+
+    expect(createdV2.statusCode).toBe(201);
+    expect(createdV2.headers.etag).toMatch(/^"[a-f0-9]{64}"$/);
+    expect(savedV1.statusCode).toBe(200);
+    expect(rollback.statusCode).toBe(200);
+    expect(restoredDraft.json()).toMatchObject({
+      schemaVersion: 2,
+      releaseId: publishedV2.releaseId,
+    });
   });
 
   it('rejects a structurally valid draft with dangling relationships', async () => {
