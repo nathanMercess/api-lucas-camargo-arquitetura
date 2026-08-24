@@ -420,6 +420,20 @@ describe('admin API', () => {
     });
   });
 
+  it('normalizes a weak proxy ETag before publishing', async () => {
+    const storage = createTestStorage();
+    const app = await createApp(AuthMode.Development, storage);
+    const createdDraft = await bootstrapDraft(app);
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/releases',
+      headers: mutationHeaders({ 'if-match': `W/${createdDraft.headers.etag ?? ''}` }),
+    });
+
+    expect(response.statusCode).toBe(201);
+    expect(response.json()).toMatchObject({ schemaVersion: 1 });
+  });
+
   it('returns a committed release after the manifest commit even when record finalization fails', async () => {
     const storage: AdminStorage = {
       ...createTestStorage(),

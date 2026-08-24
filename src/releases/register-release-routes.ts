@@ -27,7 +27,7 @@ export function registerReleaseRoutes(
     request.headers['if-match'],
     reply,
     201,
-    () => releaseService.publish(request, request.headers['if-match']?.trim() ?? ''),
+    (expectedDraftEtag) => releaseService.publish(request, expectedDraftEtag),
   ));
 
   app.post<{
@@ -47,7 +47,7 @@ export function registerReleaseRoutes(
     request.headers['if-match'],
     reply,
     200,
-    () => releaseService.rollback(request, request.params.releaseId, request.headers['if-match']?.trim() ?? ''),
+    (expectedDraftEtag) => releaseService.rollback(request, request.params.releaseId, expectedDraftEtag),
   ));
 }
 
@@ -55,18 +55,20 @@ async function handleReleaseMutation(
   ifMatch: string | undefined,
   reply: Parameters<typeof sendProblem>[0],
   successStatus: 200 | 201,
-  mutate: () => ReturnType<ReleaseService['publish']>,
+  mutate: (expectedDraftEtag: string) => ReturnType<ReleaseService['publish']>,
 ): Promise<unknown> {
-  const expectedDraftEtag = ifMatch?.trim();
+  const suppliedEtag = ifMatch?.trim();
 
-  if (expectedDraftEtag === undefined || expectedDraftEtag === '')
+  if (suppliedEtag === undefined || suppliedEtag === '')
     return sendProblem(reply, 428, 'Precondition required', 'Send the current draft ETag in the If-Match header.');
 
-  if (!/^"[^"\r\n]+"$/.test(expectedDraftEtag))
+  const expectedDraftEtag = normalizeStrongEtag(suppliedEtag);
+
+  if (expectedDraftEtag === null)
     return sendProblem(reply, 400, 'Invalid precondition', 'If-Match must contain one strong ETag.');
 
   try {
-    const result = await mutate();
+    const result = await mutate(expectedDraftEtag);
 
     return reply
       .code(successStatus)
@@ -91,4 +93,10 @@ async function handleReleaseMutation(
 
     throw error;
   }
+}
+
+function normalizeStrongEtag(value: string): string | null {
+  const strongEtag = value.startsWith('W/') ? value.slice(2) : value;
+
+  return /^"[^"\r\n]+"$/.test(strongEtag) ? strongEtag : null;
 }
