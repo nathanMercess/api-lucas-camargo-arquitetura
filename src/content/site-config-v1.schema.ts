@@ -212,7 +212,15 @@ export const siteConfigV1Schema = {
       required: ['presetId', 'colors', 'typography', 'layout', 'motion'],
       properties: {
         presetId: {
-          enum: ['lucas-camargo-v1', 'gallery-v1', 'minimal-v1', 'contrast-v1'],
+          enum: [
+            'lucas-camargo-v1',
+            'gallery-v1',
+            'minimal-v1',
+            'contrast-v1',
+            'essential-narrative-v1',
+            'services-journey-v1',
+            'studio-profile-v1',
+          ],
         },
         colors: {
           type: 'object',

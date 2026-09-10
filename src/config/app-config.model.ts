@@ -1,4 +1,5 @@
 import { AuthMode } from '../auth/auth-mode.enum.js';
+import { AdminCredentialsConfig } from '../auth/admin-credentials-config.model.js';
 import { StorageDriver } from '../storage/storage-driver.enum.js';
 import { AppEnvironment } from './app-environment.type.js';
 import { R2Config } from './r2-config.model.js';
@@ -8,6 +9,7 @@ export interface AppConfig {
   readonly host: string;
   readonly port: number;
   readonly authMode: AuthMode;
+  readonly credentials?: AdminCredentialsConfig;
   readonly iapExpectedAudience?: string;
   readonly initialOwnerEmail: string;
   readonly developmentPrincipalEmail: string;

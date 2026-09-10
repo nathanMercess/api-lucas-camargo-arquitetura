@@ -19,7 +19,7 @@ Este arquivo é a fonte de verdade para implementação, revisão e manutenção
 - Exigir ETag nas mutações de rascunho, publicação e rollback.
 - Registrar mutações com ator, ação, recurso, request ID, resultado e ETags, sem tokens ou conteúdo integral.
 - Manter buckets privados e credenciais R2 somente na API.
-- Exigir IAP em produção, autorização no backend, origem exata e defesa CSRF.
+- Exigir autenticação em produção, autorização no backend, origem exata e defesa CSRF. Enquanto o modo temporário de credenciais internas estiver ativo, manter usuários e hashes de senha exclusivamente em segredo da API, validar senhas com Argon2id, emitir sessão em cookie seguro e preservar um caminho configurável para migração futura ao IAP.
 - Não aceitar HTML, CSS ou JavaScript arbitrários no conteúdo.
 - Publicar releases e mídias em chaves imutáveis e atualizar o manifest com escrita condicional.
 

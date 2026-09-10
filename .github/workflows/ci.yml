@@ -17,7 +17,6 @@ env:
   GCP_REGION: us-central1
   GCP_ARTIFACT_REPOSITORY: lucas-camargo
   SERVICE: lucas-camargo-api
-  ADMIN_SERVICE: lucas-camargo-admin
   R2_PRIVATE_BUCKET: lucas-camargo-private
   R2_PUBLISHED_BUCKET: lucas-camargo-published
 
@@ -80,8 +79,7 @@ jobs:
           docker build --tag "$IMAGE" .
           docker push "$IMAGE"
           ADMIN_URL="https://admin.lucascamargo.com"
-          IAP_AUDIENCE="/projects/${{ vars.GCP_PROJECT_NUMBER }}/locations/$GCP_REGION/services/$ADMIN_SERVICE"
-          RUNTIME_ENV="NODE_ENV=production,AUTH_MODE=iap,STORAGE_DRIVER=r2,INITIAL_OWNER_EMAIL=nathan66merces@gmail.com,IAP_EXPECTED_AUDIENCE=$IAP_AUDIENCE,ADMIN_ALLOWED_ORIGINS=$ADMIN_URL,R2_PRIVATE_BUCKET=$R2_PRIVATE_BUCKET,R2_PUBLISHED_BUCKET=$R2_PUBLISHED_BUCKET,R2_PUBLISHED_BASE_URL=$R2_PUBLISHED_BASE_URL"
+          RUNTIME_ENV="NODE_ENV=production,AUTH_MODE=credentials,STORAGE_DRIVER=r2,ADMIN_ALLOWED_ORIGINS=$ADMIN_URL,R2_PRIVATE_BUCKET=$R2_PRIVATE_BUCKET,R2_PUBLISHED_BUCKET=$R2_PUBLISHED_BUCKET,R2_PUBLISHED_BASE_URL=$R2_PUBLISHED_BASE_URL"
           gcloud run deploy "$SERVICE" \
             --project="$GCP_PROJECT_ID" \
             --region="$GCP_REGION" \
@@ -97,7 +95,7 @@ jobs:
             --port=8080 \
             --service-account="lucas-admin-runtime@$GCP_PROJECT_ID.iam.gserviceaccount.com" \
             --set-env-vars="$RUNTIME_ENV" \
-            --set-secrets="R2_ENDPOINT=lucas-r2-endpoint:latest,R2_ACCESS_KEY_ID=lucas-r2-access-key-id:latest,R2_SECRET_ACCESS_KEY=lucas-r2-secret-access-key:latest" \
+            --set-secrets="ADMIN_CREDENTIALS_JSON=lucas-admin-credentials:latest,R2_ENDPOINT=lucas-r2-endpoint:latest,R2_ACCESS_KEY_ID=lucas-r2-access-key-id:latest,R2_SECRET_ACCESS_KEY=lucas-r2-secret-access-key:latest" \
             --labels="environment=production,managed-by=github-actions,visibility=private-api" \
             --quiet
       - name: Verificar publicação
@@ -106,4 +104,4 @@ jobs:
           test -n "$API_URL"
           test "$(gcloud run services describe "$SERVICE" --project="$GCP_PROJECT_ID" --region="$GCP_REGION" --format='value(status.conditions[0].status)')" = True
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' "$API_URL/health")" = 204
-          test "$(curl --silent --output /dev/null --write-out '%{http_code}' "$API_URL/api/session")" = 401
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' "$API_URL/api/v1/session")" = 401

@@ -22,6 +22,9 @@ describe('siteConfigV1Schema templates', () => {
     'gallery-v1',
     'minimal-v1',
     'contrast-v1',
+    'essential-narrative-v1',
+    'services-journey-v1',
+    'studio-profile-v1',
   ])('accepts the approved %s template', async (presetId) => {
     const app = createValidationApp();
     const response = await app.inject({

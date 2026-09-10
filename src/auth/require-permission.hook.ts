@@ -6,7 +6,7 @@ import { Permission } from './permission.enum.js';
 export function requirePermission(accessPolicy: AccessPolicyService, permission: Permission) {
   return async function permissionHook(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     if (request.principal === null) {
-      sendProblem(reply, 401, 'Authentication required', 'A valid IAP identity is required.');
+      sendProblem(reply, 401, 'Authentication required', 'A valid administrative session is required.');
       return;
     }
 

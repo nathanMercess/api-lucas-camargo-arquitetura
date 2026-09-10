@@ -1,7 +1,7 @@
-import { IapPrincipal } from './iap-principal.model.js';
+import { AdminPrincipal } from './admin-principal.model.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
-    principal: IapPrincipal | null;
+    principal: AdminPrincipal | null;
   }
 }
