@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { FastifyInstance } from 'fastify';
+import { argon2id } from 'hash-wasm';
 import { afterEach, describe, expect, it } from 'vitest';
 import { buildApp } from './app.js';
 import { AuditAction } from './audit/audit-action.enum.js';
@@ -67,6 +68,81 @@ describe('admin API', () => {
 
     expect(response.statusCode).toBe(401);
     expect(response.json()).toMatchObject({ title: 'Authentication required', status: 401 });
+  });
+
+  it('authenticates internal credentials and invalidates the session on logout', async () => {
+    const password = 'temporary-test-password';
+    const passwordHash = await argon2id({
+      password,
+      salt: new TextEncoder().encode('test-login-salt!'),
+      parallelism: 1,
+      iterations: 2,
+      memorySize: 19_456,
+      hashLength: 32,
+      outputType: 'encoded',
+    });
+    const config = loadAppConfig({
+      NODE_ENV: 'test',
+      AUTH_MODE: 'credentials',
+      STORAGE_DRIVER: 'memory',
+      ADMIN_CREDENTIALS_JSON: JSON.stringify({
+        version: 1,
+        users: [{
+          id: 'owner',
+          username: 'nathanMercess',
+          email: ownerEmail,
+          passwordHash,
+          role: AdminRole.Owner,
+          active: true,
+        }],
+      }),
+    });
+    const app = await buildApp(config, createTestStorage());
+    apps.push(app);
+
+    const rejected = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/login',
+      headers: mutationHeaders(),
+      payload: { username: 'nathanMercess', password: 'incorrect-password' },
+    });
+    expect(rejected.statusCode).toBe(401);
+
+    const accepted = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/login',
+      headers: mutationHeaders(),
+      payload: { username: 'nathanMercess', password },
+    });
+    expect(accepted.statusCode).toBe(204);
+    expect(accepted.headers['set-cookie']).toContain('HttpOnly');
+
+    const cookie = accepted.headers['set-cookie']?.split(';', 1)[0];
+
+    if (!cookie)
+      throw new Error('Credential login did not return a session cookie.');
+
+    const session = await app.inject({
+      method: 'GET',
+      url: '/api/v1/session',
+      headers: { cookie },
+    });
+    expect(session.statusCode).toBe(200);
+    expect(session.json()).toMatchObject({ email: ownerEmail, role: AdminRole.Owner });
+
+    const logout = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/logout',
+      headers: mutationHeaders({ cookie }),
+    });
+    expect(logout.statusCode).toBe(204);
+
+    const expiredSession = await app.inject({
+      method: 'GET',
+      url: '/api/v1/session',
+      headers: { cookie },
+    });
+    expect(expiredSession.statusCode).toBe(401);
   });
 
   it('returns explicit owner permissions in a development session', async () => {

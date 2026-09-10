@@ -1,4 +1,4 @@
-export interface IapPrincipal {
+export interface AdminPrincipal {
   readonly subject: string;
   readonly email: string;
 }

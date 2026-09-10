@@ -1,8 +1,12 @@
+import fastifyCookie from '@fastify/cookie';
 import fastify, { FastifyInstance } from 'fastify';
 import { AuditService } from './audit/audit.service.js';
 import { registerAuditRoutes } from './audit/register-audit-routes.js';
 import { AccessPolicyService } from './auth/access-policy.service.js';
+import { AdminSessionService } from './auth/admin-session.service.js';
+import { CredentialsAuthenticationService } from './auth/credentials-authentication.service.js';
 import { registerAuthentication } from './auth/register-authentication.js';
+import { registerCredentialsRoutes } from './auth/register-credentials-routes.js';
 import { registerSessionRoute } from './auth/register-session-route.js';
 import { AppConfig } from './config/app-config.model.js';
 import { ContactMessageService } from './contact-messages/contact-message.service.js';
@@ -38,7 +42,14 @@ export async function buildApp(
     },
     trustProxy: true,
   });
-  const accessPolicy = new AccessPolicyService(config.initialOwnerEmail);
+  await app.register(fastifyCookie);
+
+  const credentialUsers = config.credentials?.users ?? [];
+  const ownerEmails = credentialUsers.length > 0
+    ? credentialUsers.filter((user) => user.active).map((user) => user.email)
+    : [config.initialOwnerEmail];
+  const accessPolicy = new AccessPolicyService(ownerEmails);
+  const sessions = new AdminSessionService(config.environment === 'production');
   const auditService = new AuditService(storage.privateObjects);
   const draftService = new DraftService(storage.privateObjects);
   const releaseService = new ReleaseService(
@@ -56,7 +67,15 @@ export async function buildApp(
   app.get('/healthz', async (_request, reply) => reply.code(204).send());
   app.get('/health', async (_request, reply) => reply.code(204).send());
 
-  registerAuthentication(app, config);
+  registerAuthentication(app, config, sessions);
+
+  if (config.credentials)
+    registerCredentialsRoutes(
+      app,
+      new CredentialsAuthenticationService(config.credentials.users),
+      sessions,
+    );
+
   registerSessionRoute(app, accessPolicy, config.publishedBaseUrl ?? '/content');
   registerContentRoutes(app, accessPolicy, draftService, auditService);
   registerReleaseRoutes(app, accessPolicy, releaseService);

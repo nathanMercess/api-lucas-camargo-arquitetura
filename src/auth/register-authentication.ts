@@ -3,11 +3,16 @@ import { FastifyInstance } from 'fastify';
 import { AppConfig } from '../config/app-config.model.js';
 import { sendProblem } from '../shared/send-problem.js';
 import { AuthMode } from './auth-mode.enum.js';
+import { AdminSessionService } from './admin-session.service.js';
 import { IapPublicKeyProvider } from './iap-public-key-provider.js';
 
 const iapIssuer = 'https://cloud.google.com/iap';
 
-export function registerAuthentication(app: FastifyInstance, config: AppConfig): void {
+export function registerAuthentication(
+  app: FastifyInstance,
+  config: AppConfig,
+  sessions: AdminSessionService,
+): void {
   const oAuth2Client = new OAuth2Client();
   const publicKeyProvider = new IapPublicKeyProvider(oAuth2Client);
 
@@ -21,6 +26,11 @@ export function registerAuthentication(app: FastifyInstance, config: AppConfig):
         subject: `development:${config.developmentPrincipalEmail}`,
         email: config.developmentPrincipalEmail,
       };
+      return;
+    }
+
+    if (config.authMode === AuthMode.Credentials) {
+      request.principal = sessions.resolve(request);
       return;
     }
 

@@ -1,5 +1,5 @@
 import { AdminRole } from './admin-role.enum.js';
-import { IapPrincipal } from './iap-principal.model.js';
+import { AdminPrincipal } from './admin-principal.model.js';
 import { Permission } from './permission.enum.js';
 
 const ownerPermissions: readonly Permission[] = [
@@ -19,11 +19,11 @@ const ownerPermissions: readonly Permission[] = [
 export class AccessPolicyService {
   private readonly ownerEmails: ReadonlySet<string>;
 
-  public constructor(initialOwnerEmail: string) {
-    this.ownerEmails = new Set([initialOwnerEmail.toLowerCase()]);
+  public constructor(ownerEmails: readonly string[]) {
+    this.ownerEmails = new Set(ownerEmails.map((email) => email.toLowerCase()));
   }
 
-  public getRole(principal: IapPrincipal): AdminRole | null {
+  public getRole(principal: AdminPrincipal): AdminRole | null {
     if (this.ownerEmails.has(principal.email.toLowerCase()))
       return AdminRole.Owner;
 
@@ -37,7 +37,7 @@ export class AccessPolicyService {
     }
   }
 
-  public hasPermission(principal: IapPrincipal, permission: Permission): boolean {
+  public hasPermission(principal: AdminPrincipal, permission: Permission): boolean {
     const role = this.getRole(principal);
 
     if (role === null)

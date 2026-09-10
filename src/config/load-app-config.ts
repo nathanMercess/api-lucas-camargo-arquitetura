@@ -1,3 +1,6 @@
+import { AdminCredential } from '../auth/admin-credential.model.js';
+import { AdminCredentialsConfig } from '../auth/admin-credentials-config.model.js';
+import { AdminRole } from '../auth/admin-role.enum.js';
 import { AuthMode } from '../auth/auth-mode.enum.js';
 import { StorageDriver } from '../storage/storage-driver.enum.js';
 import { AppConfig } from './app-config.model.js';
@@ -15,11 +18,11 @@ export function loadAppConfig(environmentVariables: NodeJS.ProcessEnv = process.
     environmentVariables['DEVELOPMENT_PRINCIPAL_EMAIL'] ?? initialOwnerEmail,
     'DEVELOPMENT_PRINCIPAL_EMAIL',
   );
+  const credentials = authMode === AuthMode.Credentials
+    ? readCredentialsConfig(environmentVariables['ADMIN_CREDENTIALS_JSON'])
+    : undefined;
   const iapExpectedAudience = readOptionalValue(environmentVariables['IAP_EXPECTED_AUDIENCE']);
   const adminAllowedOrigins = readAllowedOrigins(environmentVariables['ADMIN_ALLOWED_ORIGINS'], environment);
-
-  if (environment === 'production' && authMode !== AuthMode.Iap)
-    throw new Error('AUTH_MODE must be iap in production.');
 
   if (authMode === AuthMode.Iap && iapExpectedAudience === undefined)
     throw new Error('IAP_EXPECTED_AUDIENCE is required when AUTH_MODE is iap.');
@@ -34,6 +37,7 @@ export function loadAppConfig(environmentVariables: NodeJS.ProcessEnv = process.
     host: readOptionalValue(environmentVariables['HOST']) ?? '0.0.0.0',
     port: readPort(environmentVariables['PORT']),
     authMode,
+    ...(credentials === undefined ? {} : { credentials }),
     ...(iapExpectedAudience === undefined ? {} : { iapExpectedAudience }),
     initialOwnerEmail,
     developmentPrincipalEmail,
@@ -54,13 +58,81 @@ function readEnvironment(value: string | undefined): AppEnvironment {
 }
 
 function readAuthMode(value: string | undefined, environment: AppEnvironment): AuthMode {
-  const fallback = environment === 'production' ? AuthMode.Iap : AuthMode.Development;
+  const fallback = environment === 'production' ? AuthMode.Credentials : AuthMode.Development;
   const normalizedValue = value?.trim().toLowerCase() ?? fallback;
 
-  if (normalizedValue === AuthMode.Development || normalizedValue === AuthMode.Iap)
+  if (
+    normalizedValue === AuthMode.Credentials ||
+    normalizedValue === AuthMode.Development ||
+    normalizedValue === AuthMode.Iap
+  )
     return normalizedValue;
 
-  throw new Error('AUTH_MODE must be development or iap.');
+  throw new Error('AUTH_MODE must be credentials, development or iap.');
+}
+
+function readCredentialsConfig(value: string | undefined): AdminCredentialsConfig {
+  const serializedCredentials = readRequiredValue(value, 'ADMIN_CREDENTIALS_JSON');
+  let parsedCredentials: unknown;
+
+  try {
+    parsedCredentials = JSON.parse(serializedCredentials);
+  } catch {
+    throw new Error('ADMIN_CREDENTIALS_JSON must contain valid JSON.');
+  }
+
+  if (!isRecord(parsedCredentials) || parsedCredentials['version'] !== 1)
+    throw new Error('ADMIN_CREDENTIALS_JSON must use version 1.');
+
+  const users = parsedCredentials['users'];
+
+  if (!Array.isArray(users) || users.length === 0)
+    throw new Error('ADMIN_CREDENTIALS_JSON must contain at least one user.');
+
+  const parsedUsers = users.map((user, index) => readCredential(user, index));
+  const usernames = parsedUsers.map((user) => user.username.toLowerCase());
+
+  if (new Set(usernames).size !== usernames.length)
+    throw new Error('ADMIN_CREDENTIALS_JSON must not contain duplicate usernames.');
+
+  return { version: 1, users: parsedUsers };
+}
+
+function readCredential(value: unknown, index: number): AdminCredential {
+  if (!isRecord(value))
+    throw new Error(`ADMIN_CREDENTIALS_JSON user ${index + 1} must be an object.`);
+
+  const id = readCredentialText(value['id'], 'id', index);
+  const username = readCredentialText(value['username'], 'username', index);
+  const email = readEmail(readCredentialText(value['email'], 'email', index), 'credential email');
+  const passwordHash = readCredentialText(value['passwordHash'], 'passwordHash', index);
+  const role = value['role'];
+  const active = value['active'];
+
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]{2,79}$/.test(username))
+    throw new Error(`ADMIN_CREDENTIALS_JSON user ${index + 1} has an invalid username.`);
+
+  if (!passwordHash.startsWith('$argon2id$v=19$'))
+    throw new Error(`ADMIN_CREDENTIALS_JSON user ${index + 1} must use an Argon2id password hash.`);
+
+  if (role !== AdminRole.Owner)
+    throw new Error(`ADMIN_CREDENTIALS_JSON user ${index + 1} has an unsupported role.`);
+
+  if (typeof active !== 'boolean')
+    throw new Error(`ADMIN_CREDENTIALS_JSON user ${index + 1} must declare active as a boolean.`);
+
+  return { id, username, email, passwordHash, role, active };
+}
+
+function readCredentialText(value: unknown, property: string, index: number): string {
+  if (typeof value !== 'string' || value.trim() === '')
+    throw new Error(`ADMIN_CREDENTIALS_JSON user ${index + 1} must define ${property}.`);
+
+  return value.trim();
+}
+
+function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function readStorageDriver(value: string | undefined, environment: AppEnvironment): StorageDriver {

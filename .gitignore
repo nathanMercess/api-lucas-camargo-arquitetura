@@ -37,6 +37,7 @@ gha-creds-*.json
 .env
 .env.*
 !.env.example
+/admin-credentials.json
 .sass-cache/
 /connect.lock
 /coverage
